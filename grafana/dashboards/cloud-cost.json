@@ -1,0 +1,94 @@
+{
+  "title": "Cloud Cost Dashboard",
+  "uid": "cloud-cost-001",
+  "schemaVersion": 38,
+  "refresh": "5m",
+  "time": { "from": "now-30d", "to": "now" },
+  "tags": ["cost", "cloud", "aws"],
+  "panels": [
+    {
+      "id": 1, "gridPos": {"h":4,"w":6,"x":0,"y":0},
+      "title": "Total Daily Spend (Prod)",
+      "type": "stat",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"currencyUSD","color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":30},{"color":"red","value":50}]}}},
+      "options": {"colorMode":"background","graphMode":"area","reduceOptions":{"calcs":["lastNotNull"]}},
+      "targets": [{"expr":"sum(cloud_cost_daily_usd{environment=\"prod\"})","legendFormat":"Total/day","refId":"A"}]
+    },
+    {
+      "id": 2, "gridPos": {"h":4,"w":6,"x":6,"y":0},
+      "title": "Month-to-Date Total (Prod)",
+      "type": "stat",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"currencyUSD","color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":300},{"color":"red","value":500}]}}},
+      "options": {"colorMode":"background","graphMode":"none","reduceOptions":{"calcs":["lastNotNull"]}},
+      "targets": [{"expr":"sum(cloud_cost_monthly_usd{environment=\"prod\"})","legendFormat":"MTD","refId":"A"}]
+    },
+    {
+      "id": 3, "gridPos": {"h":4,"w":6,"x":12,"y":0},
+      "title": "Budget Used % (Prod)",
+      "type": "gauge",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"percent","min":0,"max":100,"thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":70},{"color":"red","value":90}]}}},
+      "options": {"reduceOptions":{"calcs":["lastNotNull"]}},
+      "targets": [{"expr":"cloud_budget_used_percent{environment=\"prod\"}","legendFormat":"Budget %","refId":"A"}]
+    },
+    {
+      "id": 4, "gridPos": {"h":4,"w":6,"x":18,"y":0},
+      "title": "Daily Dev Spend",
+      "type": "stat",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"currencyUSD","color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":10},{"color":"red","value":20}]}}},
+      "options": {"colorMode":"background","graphMode":"area","reduceOptions":{"calcs":["lastNotNull"]}},
+      "targets": [{"expr":"sum(cloud_cost_daily_usd{environment=\"dev\"})","legendFormat":"Dev/day","refId":"A"}]
+    },
+    {
+      "id": 5, "gridPos": {"h":8,"w":12,"x":0,"y":4},
+      "title": "Daily Cost by Service (Prod)",
+      "type": "timeseries",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults":{"unit":"currencyUSD","custom":{"lineWidth":2,"fillOpacity":10}}},
+      "options": {"legend":{"calcs":["mean","max"],"displayMode":"table","placement":"bottom"}},
+      "targets": [{"expr":"cloud_cost_daily_usd{environment=\"prod\"}","legendFormat":"{{service}}","refId":"A"}]
+    },
+    {
+      "id": 6, "gridPos": {"h":8,"w":12,"x":12,"y":4},
+      "title": "Cost Breakdown by Type (MTD)",
+      "type": "piechart",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults":{"unit":"currencyUSD"}},
+      "options": {"pieType":"pie","legend":{"displayMode":"table","placement":"right","values":["value","percent"]}},
+      "targets": [{"expr":"sum by (resource_type) (cloud_cost_monthly_usd{environment=\"prod\"})","legendFormat":"{{resource_type}}","refId":"A"}]
+    },
+    {
+      "id": 7, "gridPos": {"h":8,"w":12,"x":0,"y":12},
+      "title": "Compute Cost — Prod vs Dev (Daily)",
+      "type": "bargauge",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults":{"unit":"currencyUSD","thresholds":{"steps":[{"color":"blue","value":null}]}}},
+      "options": {"orientation":"horizontal","reduceOptions":{"calcs":["lastNotNull"]}},
+      "targets": [{"expr":"cloud_cost_daily_usd{resource_type=\"compute\"}","legendFormat":"{{service}} ({{environment}})","refId":"A"}]
+    },
+    {
+      "id": 8, "gridPos": {"h":8,"w":12,"x":12,"y":12},
+      "title": "Resource Utilization vs Cost",
+      "type": "timeseries",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults":{"unit":"percent","custom":{"lineWidth":2}}},
+      "options": {"legend":{"calcs":["mean"],"displayMode":"table","placement":"bottom"}},
+      "targets": [
+        {"expr":"cloud_resource_utilization_percent{resource=\"cpu\",environment=\"prod\"}","legendFormat":"CPU % ({{instance_type}})","refId":"A"},
+        {"expr":"cloud_resource_utilization_percent{resource=\"memory\",environment=\"prod\"}","legendFormat":"Memory % ({{instance_type}})","refId":"B"}
+      ]
+    },
+    {
+      "id": 9, "gridPos": {"h":6,"w":24,"x":0,"y":20},
+      "title": "Network Costs Over Time",
+      "type": "timeseries",
+      "datasource": {"type":"prometheus"},
+      "fieldConfig": {"defaults":{"unit":"currencyUSD","custom":{"lineWidth":2,"fillOpacity":5}}},
+      "options": {"legend":{"calcs":["mean","max","sum"],"displayMode":"table","placement":"bottom"}},
+      "targets": [{"expr":"cloud_cost_daily_usd{resource_type=\"network\"}","legendFormat":"{{service}}","refId":"A"}]
+    }
+  ]
+}

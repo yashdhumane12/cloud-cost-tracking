@@ -1,0 +1,48 @@
+version: "3.8"
+
+networks:
+  cost-net:
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+services:
+
+  cost-exporter:
+    build: ./exporter
+    container_name: cost-exporter
+    ports: ["9101:9101"]
+    environment:
+      PROD_BUDGET_USD: "600"
+      DEV_BUDGET_USD:  "100"
+    networks: [cost-net]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus-cost
+    ports: ["9090:9090"]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=90d"
+    networks: [cost-net]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana-cost
+    ports: ["3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks: [cost-net]
+    depends_on: [prometheus]
+    restart: unless-stopped
